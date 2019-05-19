@@ -12,9 +12,35 @@
 #    ansible-playbook -i inventory/hosts playbooks/deploy-site-content.yaml
 #
 #
+#    Deploy the site and remove generated `public/` content
+#
+#    ansible-playbook -i inventory/hosts playbooks/deploy-site-content.yaml \
+#      -e "keep_content=false"
+#
 # Ansible arguments:
 #
-#   None
+#   keep_content:
+#
+#       When specified, will keep the hugo generated public
+#       content around locally in /tmp/hugo-site.
+#
+#       This is useful in cases where you may need to debug
+#       static content that was pushed to S3.
+#
+#       (default: true)
+#
+#   content_repo_url:
+#
+#       The URL of the Github repository that contains the static
+#       content to push to S3.
+#
+#       (default: https://github.com/caphrim007/hugo-site.git)
+#
+#   tmp_hugo:
+#
+#       Temporary location to store misc hugo work at runtime.
+#
+#       (default: /tmp/hugo)
 #
 # Ansible tags:
 #   
