@@ -70,3 +70,9 @@ $> ansible-playbook -i inventory/hosts playbooks/deploy-site-content.yaml
 Playbooks available in this role can be found in the `playbooks/` directory. Each playbook
 includes a preamble that explains the purpose of the playbook,, required/optional variables,
 and examples of using the playbooks.
+
+The playbooks are summarized below.
+
+* playbooks/bootstrap-controller.yaml - Used to setup the Ansible controller
+* playbooks/bootstrap-infra.yaml - Used to create the AWS cloud infrastructure
+* playbooks/deploy-site-content.yaml - Used to upload site content to an S3 bucket
