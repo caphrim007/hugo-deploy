@@ -14,7 +14,11 @@
 #
 # Ansible arguments:
 #
-#    None
+#    bucket:
+#
+#        The S3 bucket that you want to create for hosting static website content
+#
+#        (default: com.kittens.www)
 #
 # Ansible tags:
 #   
@@ -29,11 +33,24 @@
 
   tasks:
     - name: Create S3 bucket for holding static content
-      aws_s3:
-        bucket: "{{ bucket }}"
-        mode: create
-        permission:
-          - public-read
+      s3_bucket:
+        name: "{{ bucket }}"
+        policy: >
+          {
+            "Version": "2008-10-17",
+            "Id": "PolicyForCloudFrontPrivateContent",
+            "Statement": [
+                {
+                    "Sid": "1",
+                    "Effect": "Allow",
+                    "Principal": {
+                        "AWS": "*"
+                    },
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::{{ bucket }}/*"
+                }
+            ]
+          }
         region: "{{ aws_region }}"
         aws_access_key: "{{ aws_access_key|default(omit) }}"
         aws_secret_key: "{{ aws_secret_key|default(omit) }}"
@@ -80,14 +97,14 @@
         state: present
         caller_reference: ansible-kittens
         origins:
-          - id: S3-com.kittens.www
-            domain_name: com.kittens.www.s3.amazonaws.com
+          - id: "S3-{{ bucket }}"
+            domain_name: "{{ bucket }}.s3.amazonaws.com"
             s3_origin_config:
               origin_access_identity: "origin-access-identity/cloudfront/{{ origin_access_identity|first }}"
         default_root_object: index.html
         ipv6_enabled: false
         default_cache_behavior:
-          target_origin_id: S3-com.kittens.www
+          target_origin_id: "S3-{{ bucket }}"
           forwarded_values:
             query_string: false
             cookies:
