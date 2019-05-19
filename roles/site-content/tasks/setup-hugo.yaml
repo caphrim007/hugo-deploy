@@ -2,7 +2,7 @@
 
 - name: Check the existence of the public index file
   stat:
-    path: /tmp/hugo-site/public/index.html
+    path: "{{ tmp_hugo }}/src/public/index.html"
   register: st
 
 - name: Include OS specific variables
@@ -18,25 +18,28 @@
 
 - name: Install and run hugo binary if needed
   block:
+    - name: Create temporary hugo directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - "{{ tmp_hugo }}/src"
+        - "{{ tmp_hugo }}/bin"
+        - "{{ tmp_hugo }}/tmp"
+
     - name: Download hugo binary to generate static content
       get_url:
         url: "{{ hugo_url }}"
-        dest: "/tmp/{{ hugo_url|basename }}"
+        dest: "{{ tmp_hugo }}/tmp/{{ hugo_url|basename }}"
         mode: 0755
-
-    - name: Create temporary directory for hugo binary
-      file:
-        path: /tmp/hugo/
-        state: directory
 
     - name: Extract hugo binary
       unarchive:
-        dest: /tmp/hugo
-        src: "/tmp/{{ hugo_url|basename }}"
-
+        dest: "{{ tmp_hugo }}/bin"
+        src: "{{ tmp_hugo }}/tmp/{{ hugo_url|basename }}"
   when: not st.stat.exists
 
 - name: Run hugo binary to generate the static content
-  command: /tmp/hugo/hugo
+  command: "{{ tmp_hugo }}/bin/hugo"
   args:
-    chdir: /tmp/hugo-site
+    chdir: "{{ tmp_hugo }}/src"
