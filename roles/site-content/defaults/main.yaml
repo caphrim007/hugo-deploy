@@ -1,5 +1,15 @@
 ---
 
+# The URL of the Github repository that contains the static
+# content to push to S3
 content_repo_url: https://github.com/caphrim007/hugo-site.git
 
+# When specified, will keep the hugo generated public
+# content around locally in /tmp/hugo-site.
+#
+# This is useful in cases where you may need to debug
+# static content that was pushed to S3
 keep_content: true
+
+# Temporary location to store misc hugo work at runtime.
+tmp_hugo: /tmp/hugo
