@@ -1,0 +1,31 @@
+---
+# (Re)Deploy the static site content
+#
+# Usage:
+#
+#    ansible-playbook -i notahost, deploy-site-content.yaml [OPTIONS]:
+#
+# Examples:
+#
+#    Deploy site content using defaults
+#
+#    ansible-playbook -i inventory/hosts playbooks/deploy-site-content.yaml
+#
+#
+# Ansible arguments:
+#
+#   None
+#
+# Ansible tags:
+#   
+#   None
+
+- name: Deploy website content to S3
+  hosts: localhost
+  connection: local
+
+  vars:
+    bucket: com.kittens.www
+
+  roles:
+    - site-content

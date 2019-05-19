@@ -1,0 +1,28 @@
+---
+
+- name: Clone the website content locally for transfer
+  git:
+    repo: "{{ content_repo_url }}"
+    dest: /tmp/hugo-site
+
+- import_tasks: setup-hugo.yaml
+
+- name: Sync the website content with the S3 bucket
+  s3_sync:
+    bucket: "{{ bucket }}"
+    file_root: "/tmp/hugo-site/public/"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+    permission: public-read
+    file_change_strategy: "{{ force_sync|default(date_size) }}"
+
+- name: Cleanup hugo files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/hugo
+    - /tmp/hugo-site/public/
+  when: not keep_content|bool

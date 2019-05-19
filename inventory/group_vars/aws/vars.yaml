@@ -1,0 +1,36 @@
+---
+
+# The access key to use for connecting to AWS services.
+#
+# You should have noted this down when you first created an Access Key in
+# AWS IAM.
+#
+# The value of this key will be checked for in the inventory/aws/vault.yaml
+# file. Otherwise, you can provide it here
+aws_access_key: "{{ vault_aws_access_key|default('access') }}"
+
+# The Secret key associated with the Access key specified above.
+#
+# You should have noted this secret key down when you first created an Access
+# Key. Note that if you did not, then you will need to create a new Access Key
+# pair because the Secret Key is only displayed during creation.
+#
+# The value of this key will be checked for in the inventory/aws/vault.yaml
+# file. Otherwise, you can provide it here
+aws_secret_key: "{{ vault_aws_secret_key|default('secret') }}"
+
+# Region that you want to set up the AWS infrastructure for the Kittens
+# website
+aws_region: us-west-1
+
+# Whether or not to validate the certificates that are presented when
+# connecting to AWS services.
+#
+# If you are behind an SSL/TLS terminating proxy and you do not have the
+# correct certificate chain installed on your Ansible controller, this
+# parameter can be used to skip validating the certificate presented by
+# the proxy.
+#
+# Note that ultimately you should configure your Ansible controller correctly
+# so that validation does not need to be disabled.
+validate_certs: yes

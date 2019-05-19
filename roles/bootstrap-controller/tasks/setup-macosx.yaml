@@ -1,0 +1,6 @@
+---
+
+- name: Install system requirements - MacOSX
+  homebrew:
+    name: "{{ item }}"
+  loop: "{{ packages }}"

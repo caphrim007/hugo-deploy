@@ -1,0 +1,42 @@
+---
+
+- name: Check the existence of the public index file
+  stat:
+    path: /tmp/hugo-site/public/index.html
+  register: st
+
+- name: Include OS specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_distribution|lower }}.yaml"
+        - "{{ ansible_os_family|lower }}.yaml"
+        - default.yml
+      paths:
+        - 'vars'
+
+- name: Install and run hugo binary if needed
+  block:
+    - name: Download hugo binary to generate static content
+      get_url:
+        url: "{{ hugo_url }}"
+        dest: "/tmp/{{ hugo_url|basename }}"
+        mode: 0755
+
+    - name: Create temporary directory for hugo binary
+      file:
+        path: /tmp/hugo/
+        state: directory
+
+    - name: Extract hugo binary
+      unarchive:
+        dest: /tmp/hugo
+        src: "/tmp/{{ hugo_url|basename }}"
+
+  when: not st.stat.exists
+
+- name: Run hugo binary to generate the static content
+  command: /tmp/hugo/hugo
+  args:
+    chdir: /tmp/hugo-site

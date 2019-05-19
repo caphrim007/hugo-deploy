@@ -1,0 +1,6 @@
+---
+
+- name: Install system requirements - Debian/Ubuntu
+  apt:
+    name: "{{ item }}"
+  loop: "{{ packages }}"

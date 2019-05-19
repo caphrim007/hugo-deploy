@@ -1,0 +1,10 @@
+---
+
+# If you are using a custom Python installation, set this value
+# to the location where the Python executable resides.
+#
+# This is important for cases where the bootstrap-controller playbook
+# is used to install dependencies of this repository on the Ansible
+# controller.
+#
+# ansible_python_interpreter: /Users/tim/.virtualenvs/aws/bin/python

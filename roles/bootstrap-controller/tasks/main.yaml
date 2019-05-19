@@ -1,0 +1,25 @@
+---
+
+- name: Install pip requirements
+  pip:
+    name: "{{ item }}"
+  loop: "{{ pip_packages }}"
+
+- name: Include OS specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_distribution|lower }}.yaml"
+        - "{{ ansible_os_family|lower }}.yaml"
+        - default.yml
+      paths:
+        - 'vars'
+
+- name: Install system requirements - MacOSX
+  import_tasks: setup-macosx.yaml
+  when: ansible_distribution == "MacOSX"
+
+- name: Install system requirements - Ubuntu
+  import_tasks: setup-debian.yaml
+  when: ansible_distribution in ['Debian', 'Ubuntu']

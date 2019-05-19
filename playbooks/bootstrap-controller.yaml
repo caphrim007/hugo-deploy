@@ -1,0 +1,28 @@
+---
+# (Re)Bootstrap Ansible controller to deploy infrastructure and content
+#
+# Usage:
+#
+#    ansible-playbook -i notahost, bootstrap-controller.yaml [OPTIONS]:
+#
+# Examples:
+#
+#    Bootstrap an Ansible controller with the default settings
+#
+#    ansible-playbook -i inventory/hosts playbooks/bootstrap-controller.yaml
+#
+#
+# Ansible arguments:
+#
+#   None
+#
+# Ansible tags:
+#   
+#   None
+
+- name: Bootstrap Ansible controller
+  hosts: localhost
+  connection: local
+
+  roles:
+    - bootstrap-controller
