@@ -1,0 +1,6 @@
+---
+
+# The HostedZoneId for CloudFront distributions is always Z2FDTNDATAQYW2.
+#
+# See more here https://forums.aws.amazon.com/thread.jspa?threadID=136948
+alias_hosted_zone_id: Z2FDTNDATAQYW2

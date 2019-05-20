@@ -1,0 +1,101 @@
+---
+
+- name: Create a new ACM certificate request
+  aws_acm_certificate:
+    domain_name: "{{ domain_name }}"
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+
+- name: Get ACM certificate facts
+  aws_acm_facts:
+    domain_name: "{{ domain_name }}"
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+  register: f
+
+- name: Stop if no certificate was found
+  fail:
+    msg: "Certificate request could not be completed."
+  when: f.certificates | count < 1
+
+- name: Create domain validation CNAME
+  route53:
+    state: present
+    zone: "{{ domain_name }}"
+    record: "{{ f.certificates[0]['domain_validation_options'][0]['resource_record']['name'] }}"
+    type: CNAME
+    ttl: 300
+    value: "{{ f.certificates[0]['domain_validation_options'][0]['resource_record']['value'] }}"
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+
+- name: Pause for the domain validation to happen
+  pause:
+    prompt: "Please open a browser window to AWS ACM and wait for {{ domain_name }} to be listed as 'Issued'"
+
+- name: Check ACM facts for certificate
+  aws_acm_facts:
+    domain_name: "{{ domain_name }}"
+    region: us-east-1
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+  register: f
+
+- name: Fail if certificate is not shown as Issued
+  fail:
+    msg: "Certificate is not yet issued. Status is {{ f.certificates[0]['status'] }}"
+  when: f.certificates[0]['status'] != 'ISSUED'
+
+- name: Get current CloudFront Distribution config
+  cloudfront_facts:
+    list_origin_access_identities: true
+    list_distributions: true
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+
+- name: Set facts for use in managing CloudFront distribution
+  set_fact:
+    origin_access_identity: "{{ cloudfront | json_query(query1) }}"
+    distribution_id: "{{ cloudfront | json_query(query2) | json_query(query3) | first | default('None') }}"
+    cloudfront_domain: "{{ cloudfront | json_query(query2) | json_query(query4) | first | default('None') }}"
+  vars:
+    query1: "origin_access_identities[?Comment == 'access-identity-static-kittens'].Id"
+    query2: "distributions.*"
+    query3: "[?Comment=='Static web content'].Id"
+    query4: "[?Comment=='Static web content'].DomainName"
+
+- name: Update CloudFront Distribution with the new ACM cert info
+  cloudfront_distribution:
+    aliases:
+      - releasethekittens.net
+    state: present
+    caller_reference: ansible-kittens
+    viewer_certificate:
+      acm_certificate_arn: "{{ f.certificates[0]['certificate_arn'] }}"
+      ssl_support_method: sni-only
+      minimum_protocol_version: TLSv1.1_2016
+    wait: "{{ cloudfront_wait|default('true') }}"
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+
+- name: Create alias to point CloudFront to S3 bucket
+  route53:
+    alias: true
+    alias_hosted_zone_id: "{{ alias_hosted_zone_id }}"
+    type: A
+    record: "{{ domain_name }}."
+    zone: "{{ domain_name }}"
+    value: "{{ cloudfront_domain }}."
+    ttl: 300
+    aws_access_key: "{{ aws_access_key|default(omit) }}"
+    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+    validate_certs: "{{ validate_certs }}"
+    state: present
+  register: hosted_zones
+
