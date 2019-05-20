@@ -130,8 +130,8 @@ def main():
     argument_spec.update(
         dict(
             domain_name=dict(aliases=['name']),
-            validation_method=dict(choices=['DNS', 'EMAIL']),
-            idempotency_token=dict(default='ansible-aws-acm-certificate-module'),
+            validation_method=dict(choices=['DNS', 'EMAIL'], default='DNS'),
+            idempotency_token=dict(default='ansible'),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
