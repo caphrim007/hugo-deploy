@@ -1,0 +1,42 @@
+---
+# (Re)Configure the CloudFront distribution to use ACM Certificate
+#
+# This playbook can be used to optionally reconfigure the CloudFront distribution
+# to use an AWS ACM certificate.
+#
+# This playbook makes the assumption that a domain has been procured and is
+# available in Route53; releasethekittens.net by default.
+#
+# Note that this process can take some time to show up as complete within the
+# AWS services because of the necessary delays in both DNS and the ACM service
+# that is responsible for validating DNS ownership.
+#
+# Usage:
+#
+#    ansible-playbook -i notahost, bonus.yaml [OPTIONS]:
+#
+# Examples:
+#
+#    Set up CloudFront with AWS ACM certificate and Route53 validation
+#
+#    ansible-playbook -i inventory/hosts playbooks/bonus.yaml
+#
+#
+# Ansible arguments:
+#
+#   None
+#
+# Ansible tags:
+#   
+#   None
+
+- name: Setup CloudFront w/ACM certification and Route53 validation
+  hosts: localhost
+  connection: local
+
+  vars:
+    domain_name: releasethekittens.net
+    bucket: com.kittens.www
+
+  roles:
+    - bonus
