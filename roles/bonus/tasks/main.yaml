@@ -3,6 +3,7 @@
 - name: Create a new ACM certificate request
   aws_acm_certificate:
     domain_name: "{{ domain_name }}"
+    region: us-east-1
     aws_access_key: "{{ aws_access_key|default(omit) }}"
     aws_secret_key: "{{ aws_secret_key|default(omit) }}"
     validate_certs: "{{ validate_certs }}"
@@ -10,10 +11,12 @@
 - name: Get ACM certificate facts
   aws_acm_facts:
     domain_name: "{{ domain_name }}"
+    region: us-east-1
     aws_access_key: "{{ aws_access_key|default(omit) }}"
     aws_secret_key: "{{ aws_secret_key|default(omit) }}"
     validate_certs: "{{ validate_certs }}"
   register: f
+  until: f.certificates | count > 0 and 'resource_record' in f.certificates[0]['domain_validation_options'][0]
 
 - name: Stop if no certificate was found
   fail:
@@ -32,6 +35,7 @@
     aws_secret_key: "{{ aws_secret_key|default(omit) }}"
     validate_certs: "{{ validate_certs }}"
 
+# TODO(Make pausing optional and add fact checking for waiting)
 - name: Pause for the domain validation to happen
   pause:
     prompt: "Please open a browser window to AWS ACM and wait for {{ domain_name }} to be listed as 'Issued'"
@@ -79,6 +83,7 @@
       acm_certificate_arn: "{{ f.certificates[0]['certificate_arn'] }}"
       ssl_support_method: sni-only
       minimum_protocol_version: TLSv1.1_2016
+      cloudfront_default_certificate: false
     wait: "{{ cloudfront_wait|default('true') }}"
     aws_access_key: "{{ aws_access_key|default(omit) }}"
     aws_secret_key: "{{ aws_secret_key|default(omit) }}"
@@ -97,5 +102,3 @@
     aws_secret_key: "{{ aws_secret_key|default(omit) }}"
     validate_certs: "{{ validate_certs }}"
     state: present
-  register: hosted_zones
-
