@@ -20,6 +20,13 @@
 #
 #        (default: com.kittens.www)
 #
+#
+#    cloudfront_wait:
+#
+#        Wait for the CloudFront distribution to fully deploy
+#
+#        (default: true)
+
 # Ansible tags:
 #   
 #   None
@@ -30,98 +37,7 @@
 
   vars:
     bucket: com.kittens.www
+    cloudfront_wait: true
 
-  tasks:
-    - name: Create S3 bucket for holding static content
-      s3_bucket:
-        name: "{{ bucket }}"
-        policy: >
-          {
-            "Version": "2008-10-17",
-            "Id": "PolicyForCloudFrontPrivateContent",
-            "Statement": [
-                {
-                    "Sid": "1",
-                    "Effect": "Allow",
-                    "Principal": {
-                        "AWS": "*"
-                    },
-                    "Action": "s3:GetObject",
-                    "Resource": "arn:aws:s3:::{{ bucket }}/*"
-                }
-            ]
-          }
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key|default(omit) }}"
-        aws_secret_key: "{{ aws_secret_key|default(omit) }}"
-        validate_certs: "{{ validate_certs }}"
-
-    - name: Configure S3 bucket for website
-      s3_website:
-        name: "{{ bucket }}"
-        region: "{{ aws_region }}"
-        aws_access_key: "{{ aws_access_key|default(omit) }}"
-        aws_secret_key: "{{ aws_secret_key|default(omit) }}"
-        validate_certs: "{{ validate_certs }}"
-        state: present
-
-    - name: Get CloudFront facts
-      cloudfront_facts:
-        list_origin_access_identities: true
-        list_distributions: true
-        aws_access_key: "{{ aws_access_key|default(omit) }}"
-        aws_secret_key: "{{ aws_secret_key|default(omit) }}"
-        validate_certs: "{{ validate_certs }}"
-
-    - name: Set facts for use in managing CloudFront distribution
-      set_fact:
-        origin_access_identity: "{{ cloudfront | json_query(query1) }}"
-        distribution_id: "{{ cloudfront | json_query(query2) | json_query(query3) }}"
-      vars:
-        query1: "origin_access_identities[?Comment == 'access-identity-static-kittens'].Id"
-        query2: "distributions.*"
-        query3: "[?Comment=='Static web content'].Id"
-
-    - name: Create an origin access identity
-      cloudfront_origin_access_identity:
-        state: present
-        caller_reference: ansible-kittens
-        comment: access-identity-static-kittens
-        aws_access_key: "{{ aws_access_key|default(omit) }}"
-        aws_secret_key: "{{ aws_secret_key|default(omit) }}"
-        validate_certs: "{{ validate_certs }}"
-      when: origin_access_identity|count < 1
-
-    - name: Create CloudFront Distribution
-      cloudfront_distribution:
-        state: present
-        caller_reference: ansible-kittens
-        origins:
-          - id: "S3-{{ bucket }}"
-            domain_name: "{{ bucket }}.s3.amazonaws.com"
-            s3_origin_config:
-              origin_access_identity: "origin-access-identity/cloudfront/{{ origin_access_identity|first }}"
-        default_root_object: index.html
-        ipv6_enabled: false
-        default_cache_behavior:
-          target_origin_id: "S3-{{ bucket }}"
-          forwarded_values:
-            query_string: false
-            cookies:
-              forward: none
-          viewer_protocol_policy: redirect-to-https
-          smooth_streaming: false
-          compress: false
-          allowed_methods:
-            items:
-              - GET
-              - HEAD
-            cached_methods:
-              - GET
-              - HEAD
-        enabled: false
-        comment: Static web content
-        aws_access_key: "{{ aws_access_key|default(omit) }}"
-        aws_secret_key: "{{ aws_secret_key|default(omit) }}"
-        validate_certs: "{{ validate_certs }}"
-      when: distribution_id|count < 1
+  roles:
+    - bootstrap-infra
